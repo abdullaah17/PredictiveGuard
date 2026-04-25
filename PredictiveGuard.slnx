@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="PredictiveGuard.API/PredictiveGuard.API.csproj" />
+  <Project Path="PredictiveGuard.Data/PredictiveGuard.Data.csproj" />
+  <Project Path="PredictiveGuard.Web/PredictiveGuard.Web.csproj" />
+</Solution>

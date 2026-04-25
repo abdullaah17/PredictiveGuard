@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "GR+JTkTSDK0=",
+  "success": true,
+  "projectFilePath": "/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard/PredictiveGuard.Web/PredictiveGuard.Web.csproj",
+  "expectedPackageFiles": [
+    "/Users/macbookpro/.nuget/packages/microsoft.aspnetcore.app.internal.assets/10.0.7/microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512",
+    "/Users/macbookpro/.nuget/packages/microsoft.aspnetcore.authentication.google/10.0.7/microsoft.aspnetcore.authentication.google.10.0.7.nupkg.sha512"
+  ],
+  "logs": []
+}
