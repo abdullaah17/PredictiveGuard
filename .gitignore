@@ -1,0 +1,33 @@
+# Binaries
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.vscode/
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+appsettings.local.json
+.env

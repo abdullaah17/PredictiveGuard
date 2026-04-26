@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PredictiveGuard.Data.Data;
 using PredictiveGuard.API.Services;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,5 +45,25 @@ using (var scope = app.Services.CreateScope())
     var seeder = new DataSeeder(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
     await seeder.SeedAsync();
 }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        var exception = exceptionHandlerPathFeature?.Error;
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        var errorResponse = new
+        {
+            message = "An error occurred processing your request",
+            detail = exception?.Message ?? "Unknown error"
+        };
+
+        await context.Response.WriteAsJsonAsync(errorResponse);
+    });
+});
 
 app.Run();

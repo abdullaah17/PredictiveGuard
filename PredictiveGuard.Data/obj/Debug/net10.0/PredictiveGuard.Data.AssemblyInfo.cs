@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PredictiveGuard.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05890be1f01f9c98ad360790cd5d031a68954c6b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d600979b520866a9bc49b3c847fdb91b6159343d")]
 [assembly: System.Reflection.AssemblyProductAttribute("PredictiveGuard.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PredictiveGuard.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
