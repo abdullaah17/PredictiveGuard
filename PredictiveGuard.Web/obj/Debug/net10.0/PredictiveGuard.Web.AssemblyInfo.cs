@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PredictiveGuard.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+210a9fe559e8b531d9145ac4fda70cb8d5f421a1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+94a74676120dadc2a29d4d18640f8b2adab007ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("PredictiveGuard.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PredictiveGuard.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

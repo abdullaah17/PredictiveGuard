@@ -1,0 +1,139 @@
+@page "/asset/{AssetId:int}"
+@using PredictiveGuard.Web.Services
+@using PredictiveGuard.Data.Models
+@inject ApiService ApiService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Asset Details - Predictive Guard</PageTitle>
+
+<div class="container mt-5">
+    @if (asset == null)
+    {
+        <p>Loading asset...</p>
+    }
+    else
+    {
+        <h1>@asset.Name</h1>
+        <p><strong>Type:</strong> @asset.Type | <strong>Location:</strong> @asset.Location</p>
+
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#sensor-data">Sensor Data</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tickets">Maintenance Tickets</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#team">Team Members</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <div id="sensor-data" class="tab-pane fade show active">
+                @if (sensorReadings == null)
+                {
+                    <p>Loading sensor data...</p>
+                }
+                else if (sensorReadings.Count == 0)
+                {
+                    <p>No sensor readings yet.</p>
+                }
+                else
+                {
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Temperature (°C)</th>
+                                <th>Vibration (m/s²)</th>
+                                <th>Load (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reading in sensorReadings.Take(20))
+                            {
+                                <tr>
+                                    <td>@reading.Timestamp:G</td>
+                                    <td>@reading.Temperature</td>
+                                    <td>@reading.Vibration</td>
+                                    <td>@reading.Load</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div id="tickets" class="tab-pane fade">
+                @if (tickets == null)
+                {
+                    <p>Loading tickets...</p>
+                }
+                else if (tickets.Count == 0)
+                {
+                    <p>No maintenance tickets.</p>
+                }
+                else
+                {
+                    @foreach (var ticket in tickets)
+                    {
+                        <div class="alert alert-@GetAlertClass(ticket.Status) mb-2">
+                            <strong>@ticket.AlertType</strong> - @ticket.Status<br>
+                            <small>@ticket.Description</small>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div id="team" class="tab-pane fade">
+                @if (teamMembers == null)
+                {
+                    <p>Loading team members...</p>
+                }
+                else
+                {
+                    <ul class="list-group">
+                        @foreach (var member in teamMembers)
+                        {
+                            <li class="list-group-item">
+                                @member.User.FullName - <span class="badge bg-secondary">@member.Role</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <a href="/" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int AssetId { get; set; }
+
+    private Asset asset;
+    private List<SensorReading> sensorReadings;
+    private List<MaintenanceTicket> tickets;
+    private List<AssetTeamMember> teamMembers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        asset = await ApiService.GetAssetByIdAsync(AssetId);
+        sensorReadings = await ApiService.GetSensorReadingsAsync(AssetId);
+        tickets = (await ApiService.GetTicketsAsync()).Where(t => t.AssetId == AssetId).ToList();
+        teamMembers = await ApiService.GetTeamMembersAsync(AssetId);
+    }
+
+    private string GetAlertClass(string status)
+    {
+        return status switch
+        {
+            "Reported" => "warning",
+            "Assigned" => "info",
+            "In Progress" => "primary",
+            "Completed" => "success",
+            _ => "secondary"
+        };
+    }
+}

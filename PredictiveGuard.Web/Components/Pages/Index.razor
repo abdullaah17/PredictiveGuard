@@ -1,0 +1,70 @@
+@page "/"
+@using PredictiveGuard.Web.Services
+@using PredictiveGuard.Data.Models
+@inject ApiService ApiService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Dashboard - Predictive Guard</PageTitle>
+
+<div class="container mt-5">
+    <h1>Asset Dashboard</h1>
+    
+    <AuthorizeView>
+        <Authorized>
+            <button class="btn btn-primary mb-3" @onclick="ShowCreateAssetModal">+ New Asset</button>
+            
+            @if (assets == null)
+            {
+                <p>Loading assets...</p>
+            }
+            else if (assets.Count == 0)
+            {
+                <p>No assets found. Create one to get started.</p>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var asset in assets)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">@asset.Name</h5>
+                                    <p class="card-text">
+                                        <strong>Type:</strong> @asset.Type<br>
+                                        <strong>Location:</strong> @asset.Location<br>
+                                        <strong>Status:</strong> @(asset.IsActive ? "Active" : "Inactive")
+                                    </p>
+                                    <a href="@($"asset/{asset.Id}")" class="btn btn-sm btn-info">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p>Please log in to view assets.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private List<Asset> assets;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssets();
+    }
+
+    private async Task LoadAssets()
+    {
+        assets = await ApiService.GetAssetsAsync();
+    }
+
+    private void ShowCreateAssetModal()
+    {
+        // TODO: Implement modal
+        Console.WriteLine("Show create asset modal");
+    }
+}
