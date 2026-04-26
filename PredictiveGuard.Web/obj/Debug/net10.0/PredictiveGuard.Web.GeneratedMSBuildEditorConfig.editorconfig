@@ -26,6 +26,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/Components/Pages/Admin/Admin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9BZG1pbi9BZG1pbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/Components/Pages/AssetDetail.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Bc3NldERldGFpbC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -44,6 +48,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ob3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/Components/Pages/OfflineCache.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9PZmZsaW5lQ2FjaGUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/Components/Pages/Weather.razor]

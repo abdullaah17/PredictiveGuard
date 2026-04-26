@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PredictiveGuard.Data.Data;
+using PredictiveGuard.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,5 +38,11 @@ app.UseHttpsRedirection();
 app.UseCors("AllowBlazor");
 app.UseAuthorization();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = new DataSeeder(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
+    await seeder.SeedAsync();
+}
 
 app.Run();
