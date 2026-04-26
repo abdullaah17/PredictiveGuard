@@ -1,0 +1,13 @@
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/bin/Debug/net10.0/PredictiveGuard.Data.deps.json
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/bin/Debug/net10.0/PredictiveGuard.Data.dll
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/bin/Debug/net10.0/PredictiveGuard.Data.pdb
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.csproj.AssemblyReference.cache
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.GeneratedMSBuildEditorConfig.editorconfig
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.AssemblyInfoInputs.cache
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.AssemblyInfo.cs
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.csproj.CoreCompileInputs.cache
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.sourcelink.json
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.dll
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/refint/PredictiveGuard.Data.dll
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/PredictiveGuard.Data.pdb
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Data/obj/Debug/net10.0/ref/PredictiveGuard.Data.dll
