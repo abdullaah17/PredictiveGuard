@@ -34,7 +34,7 @@
                 <div class="col-md-3">
                     <div class="stat-card" role="region" aria-label="Total Assets: @totalAssets">
                         <div class="stat-value-row">
-                            <span class="stat-value" data-target="@totalAssets">0</span>
+                            <span class="stat-value" data-target="@totalAssets">@totalAssets</span>
                         </div>
                         <p class="stat-title">Total Assets</p>
                         <div class="stat-change">
@@ -51,7 +51,7 @@
                 <div class="col-md-3">
                     <div class="stat-card" role="region" aria-label="Active Alerts: @activeAlerts">
                         <div class="stat-value-row">
-                            <span class="stat-value" data-target="@activeAlerts">0</span>
+                            <span class="stat-value" data-target="@activeAlerts">@activeAlerts</span>
                         </div>
                         <p class="stat-title">Active Alerts</p>
                         <div class="stat-change">
@@ -68,7 +68,7 @@
                 <div class="col-md-3">
                     <div class="stat-card" role="region" aria-label="Assigned Tickets: @assignedTickets">
                         <div class="stat-value-row">
-                            <span class="stat-value" data-target="@assignedTickets">0</span>
+                            <span class="stat-value" data-target="@assignedTickets">@assignedTickets</span>
                         </div>
                         <p class="stat-title">Assigned Tickets</p>
                         <div class="stat-change">
@@ -85,7 +85,7 @@
                 <div class="col-md-3">
                     <div class="stat-card" role="region" aria-label="Completed Today: @completedToday">
                         <div class="stat-value-row">
-                            <span class="stat-value" data-target="@completedToday">0</span>
+                            <span class="stat-value" data-target="@completedToday">@completedToday</span>
                         </div>
                         <p class="stat-title">Completed Today</p>
                         <div class="stat-change">
@@ -426,6 +426,8 @@
             {
                 await LoadAdminData();
                 StateHasChanged();
+                // Brief delay to ensure DOM has updated before triggering JS animation
+                await Task.Delay(50);
                 await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
             });
         }, null, 5000, 5000);
@@ -444,32 +446,42 @@
 
     private async Task LoadAdminData()
     {
-        assets = await ApiService.GetAssetsAsync();
-        tickets = await ApiService.GetTicketsAsync();
-        users = await ApiService.GetUsersAsync();
+        // Fetch base data in parallel
+        var assetsTask = ApiService.GetAssetsAsync();
+        var ticketsTask = ApiService.GetTicketsAsync();
+        var usersTask = ApiService.GetUsersAsync();
 
-        totalAssets = assets?.Count ?? 0;
-        activeAlerts = tickets?.Where(t => t.Status != "Completed").Count() ?? 0;
-        assignedTickets = tickets?.Where(t => t.Status == "Assigned").Count() ?? 0;
-        completedToday = tickets?.Where(t => t.CompletedAt.HasValue && t.CompletedAt.Value.Date == DateTime.Today).Count() ?? 0;
+        await Task.WhenAll(assetsTask, ticketsTask, usersTask);
 
-        // Load latest readings for each asset
-        foreach (var asset in assets ?? new())
+        var rawAssets = await assetsTask;
+        assets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
+        
+        tickets = await ticketsTask;
+        users = await usersTask;
+
+        // Calculate stats using UTC to avoid timezone drift
+        var todayUtc = DateTime.UtcNow.Date;
+        totalAssets = assets.Count;
+        activeAlerts = tickets.Count(t => t.Status != "Completed");
+        assignedTickets = tickets.Count(t => t.Status == "Assigned");
+        completedToday = tickets.Count(t => t.CompletedAt.HasValue && t.CompletedAt.Value.Date == todayUtc);
+
+        // Fetch latest readings in parallel for efficiency
+        var readingTasks = assets.Select(async asset => 
         {
             var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 1);
-            if (readings.Any())
-            {
-                latestReadings[asset.Id] = readings.First();
-            }
-        }
+            return new { Id = asset.Id, Reading = readings.FirstOrDefault() };
+        });
 
-        // Load team members
-        assetMembers = new();
-        foreach (var asset in assets ?? new())
-        {
-            var members = await ApiService.GetTeamMembersAsync(asset.Id);
-            assetMembers.AddRange(members);
-        }
+        var readingResults = await Task.WhenAll(readingTasks);
+        latestReadings = readingResults
+            .Where(r => r.Reading != null)
+            .ToDictionary(r => r.Id, r => r.Reading);
+
+        // Fetch team members in parallel
+        var teamTasks = assets.Select(asset => ApiService.GetTeamMembersAsync(asset.Id));
+        var teamResults = await Task.WhenAll(teamTasks);
+        assetMembers = teamResults.SelectMany(m => m).ToList();
     }
 
     private async Task RefreshData()

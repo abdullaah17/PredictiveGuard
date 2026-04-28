@@ -222,21 +222,27 @@ window.initGenerativeBackground = () => {
 // Animated stat counters — replicates Framer Motion useSpring counting
 window.initAnimatedCounters = () => {
     document.querySelectorAll('.stat-value[data-target]').forEach(el => {
-        if (el.dataset.animated === 'true') return;
+        const targetValue = parseFloat(el.dataset.target);
+        const lastTarget = parseFloat(el.dataset.lastTarget || "-1");
+        
+        // Only skip if already animated AND the target hasn't changed
+        if (el.dataset.animated === 'true' && targetValue === lastTarget) return;
+        
         el.dataset.animated = 'true';
+        el.dataset.lastTarget = targetValue;
 
-        const target = parseFloat(el.dataset.target);
         const duration = 2000;
-        const start = performance.now();
+        const startValue = lastTarget === -1 ? 0 : lastTarget;
+        const startTime = performance.now();
 
         const easeOut = t => 1 - Math.pow(1 - t, 3);
 
         const tick = (now) => {
-            const elapsed = now - start;
+            const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const current = easeOut(progress) * target;
+            const current = startValue + (easeOut(progress) * (targetValue - startValue));
 
-            if (Number.isInteger(target)) {
+            if (Number.isInteger(targetValue)) {
                 el.textContent = Math.round(current).toLocaleString();
             } else {
                 el.textContent = current.toFixed(1);

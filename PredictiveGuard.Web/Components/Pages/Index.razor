@@ -50,7 +50,7 @@
                     <div class="col-md-3">
                         <div class="stat-card" role="region" aria-label="Total Assets: @assets.Count">
                             <div class="stat-value-row">
-                                <span class="stat-value" data-target="@assets.Count">0</span>
+                                <span class="stat-value" data-target="@assets.Count">@assets.Count</span>
                             </div>
                             <p class="stat-title">Total Assets</p>
                             <div class="stat-change">
@@ -67,7 +67,7 @@
                     <div class="col-md-3">
                         <div class="stat-card" role="region" aria-label="Active: @assets.Count(a => a.IsActive)">
                             <div class="stat-value-row">
-                                <span class="stat-value" data-target="@assets.Count(a => a.IsActive)">0</span>
+                                <span class="stat-value" data-target="@assets.Count(a => a.IsActive)">@assets.Count(a => a.IsActive)</span>
                             </div>
                             <p class="stat-title">Active</p>
                             <div class="stat-change">
@@ -84,7 +84,7 @@
                     <div class="col-md-3">
                         <div class="stat-card" role="region" aria-label="Inactive: @assets.Count(a => !a.IsActive)">
                             <div class="stat-value-row">
-                                <span class="stat-value" data-target="@assets.Count(a => !a.IsActive)">0</span>
+                                <span class="stat-value" data-target="@assets.Count(a => !a.IsActive)">@assets.Count(a => !a.IsActive)</span>
                             </div>
                             <p class="stat-title">Inactive</p>
                             <div class="stat-change">
@@ -101,7 +101,7 @@
                     <div class="col-md-3">
                         <div class="stat-card" role="region" aria-label="Avg Health: 94%">
                             <div class="stat-value-row">
-                                <span class="stat-value" data-target="94">0</span>
+                                <span class="stat-value" data-target="94">94</span>
                                 <span class="stat-suffix">%</span>
                             </div>
                             <p class="stat-title">Avg Health Score</p>
@@ -247,7 +247,8 @@
 
     private async Task LoadAssets()
     {
-        assets = await ApiService.GetAssetsAsync();
+        var rawAssets = await ApiService.GetAssetsAsync();
+        assets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
     }
 
     private void ShowCreateAssetModal()

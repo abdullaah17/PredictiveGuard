@@ -108,22 +108,30 @@
 
     private async Task LoadCacheStatus()
     {
-        cachedAssets = await ApiService.GetAssetsAsync();
-        lastCachedTime = DateTime.Now; // Would read from localStorage in real app
+        var rawAssets = await ApiService.GetAssetsAsync();
+        cachedAssets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
+        lastCachedTime = DateTime.UtcNow;
     }
 
     private async Task CacheLast48Hours()
     {
         cachedReadings.Clear();
-        cachedAssets = await ApiService.GetAssetsAsync();
+        var rawAssets = await ApiService.GetAssetsAsync();
+        cachedAssets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
 
-        foreach (var asset in cachedAssets)
+        var cacheTasks = cachedAssets.Select(async asset => 
         {
             var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 48);
-            cachedReadings[asset.Id] = readings;
+            return new { Id = asset.Id, Readings = readings };
+        });
+
+        var results = await Task.WhenAll(cacheTasks);
+        foreach (var result in results)
+        {
+            cachedReadings[result.Id] = result.Readings;
         }
 
-        lastCachedTime = DateTime.Now;
+        lastCachedTime = DateTime.UtcNow;
         await JS.InvokeVoidAsync("alert", "48 hours of data cached locally!");
     }
 
