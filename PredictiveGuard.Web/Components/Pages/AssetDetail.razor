@@ -6,105 +6,173 @@
 
 <PageTitle>Asset Details - Predictive Guard</PageTitle>
 
-<div class="container mt-5">
+<div class="container-fluid mt-2">
     @if (asset == null)
     {
-        <p>Loading asset...</p>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-3">Loading asset details...</p>
+        </div>
     }
     else
     {
-        <h1>@asset.Name</h1>
-        <p><strong>Type:</strong> @asset.Type | <strong>Location:</strong> @asset.Location</p>
-
-        <ul class="nav nav-tabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#sensor-data">Sensor Data</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#tickets">Maintenance Tickets</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#team">Team Members</a>
-            </li>
-        </ul>
-
-        <div class="tab-content mt-3">
-            <div id="sensor-data" class="tab-pane fade show active">
-                @if (sensorReadings == null)
-                {
-                    <p>Loading sensor data...</p>
-                }
-                else if (sensorReadings.Count == 0)
-                {
-                    <p>No sensor readings yet.</p>
-                }
-                else
-                {
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>Temperature (°C)</th>
-                                <th>Vibration (m/s²)</th>
-                                <th>Load (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var reading in sensorReadings.Take(20))
-                            {
-                                <tr>
-                                    <td>@reading.Timestamp:G</td>
-                                    <td>@reading.Temperature</td>
-                                    <td>@reading.Vibration</td>
-                                    <td>@reading.Load</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-            </div>
-
-            <div id="tickets" class="tab-pane fade">
-                @if (tickets == null)
-                {
-                    <p>Loading tickets...</p>
-                }
-                else if (tickets.Count == 0)
-                {
-                    <p>No maintenance tickets.</p>
-                }
-                else
-                {
-                    @foreach (var ticket in tickets)
-                    {
-                        <div class="alert alert-@GetAlertClass(ticket.Status) mb-2">
-                            <strong>@ticket.AlertType</strong> - @ticket.Status<br>
-                            <small>@ticket.Description</small>
+        <div class="d-flex justify-content-between align-items-start mb-5">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05)); border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <i class="bi bi-cpu fs-3 text-primary"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-0 text-white">@asset.Name</h1>
+                        <div class="d-flex align-items-center gap-3 mt-1">
+                            <span class="badge-glow @(asset.IsActive ? "badge-success" : "badge-secondary")">
+                                <i class="bi @(asset.IsActive ? "bi-check-circle-fill" : "bi-dash-circle-fill") me-1"></i>
+                                @(asset.IsActive ? "Active" : "Inactive")
+                            </span>
                         </div>
-                    }
-                }
+                    </div>
+                </div>
+                <div class="d-flex gap-4 mt-3 ms-1 text-muted">
+                    <span><i class="bi bi-tag me-2"></i>@asset.Type</span>
+                    <span><i class="bi bi-geo-alt me-2"></i>@asset.Location</span>
+                </div>
             </div>
-
-            <div id="team" class="tab-pane fade">
-                @if (teamMembers == null)
-                {
-                    <p>Loading team members...</p>
-                }
-                else
-                {
-                    <ul class="list-group">
-                        @foreach (var member in teamMembers)
-                        {
-                            <li class="list-group-item">
-                                @member.User.FullName - <span class="badge bg-secondary">@member.Role</span>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
+            
+            <a href="/" class="btn-glass">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
         </div>
 
-        <a href="/" class="btn btn-secondary mt-3">Back to Dashboard</a>
+        <div class="glass-panel p-4 mb-4">
+            <nav class="custom-tabs-list variant-underline w-100 mb-4" data-orientation="horizontal" role="tablist">
+                <a class="custom-tab active" data-bs-toggle="tab" href="#sensor-data">
+                    <i class="bi bi-activity me-2"></i> Sensor Data
+                </a>
+                <a class="custom-tab" data-bs-toggle="tab" href="#tickets">
+                    <i class="bi bi-ticket-detailed me-2"></i> Maintenance Tickets
+                </a>
+                <a class="custom-tab" data-bs-toggle="tab" href="#team">
+                    <i class="bi bi-people me-2"></i> Team Members
+                </a>
+                <div class="custom-tab-indicator"></div>
+            </nav>
+
+            <div class="tab-content">
+                <div id="sensor-data" class="tab-pane fade show active">
+                    @if (sensorReadings == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
+                            <span class="text-muted ms-2">Loading sensor data...</span>
+                        </div>
+                    }
+                    else if (sensorReadings.Count == 0)
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-graph-down text-muted fs-1 mb-3 d-block"></i>
+                            <h5 class="text-white">No sensor readings yet</h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table-glass">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Temperature (°C)</th>
+                                        <th>Vibration (m/s²)</th>
+                                        <th>Load (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reading in sensorReadings.Take(20))
+                                    {
+                                        <tr>
+                                            <td><span class="text-muted"><i class="bi bi-clock me-2"></i>@reading.Timestamp.ToString("G")</span></td>
+                                            <td><span class="text-white fw-medium">@reading.Temperature.ToString("F1")</span></td>
+                                            <td><span class="text-white fw-medium">@reading.Vibration.ToString("F2")</span></td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="progress flex-grow-1" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                                        <div class="progress-bar bg-info" role="progressbar" style="width: @reading.Load%"></div>
+                                                    </div>
+                                                    <span class="text-muted" style="min-width: 40px;">@reading.Load.ToString("F0")%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div id="tickets" class="tab-pane fade">
+                    @if (tickets == null)
+                    {
+                        <p class="text-muted">Loading tickets...</p>
+                    }
+                    else if (tickets.Count == 0)
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-check-circle text-success fs-1 mb-3 d-block"></i>
+                            <h5 class="text-white">No maintenance tickets</h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var ticket in tickets)
+                            {
+                                <div class="col-md-6">
+                                    <div class="glass-card p-4 h-100" style="border-left: 4px solid var(--accent-@GetAlertClass(ticket.Status))">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="text-white fs-5">@ticket.AlertType</strong>
+                                            <span class="badge-glow badge-@GetAlertClass(ticket.Status)">@ticket.Status</span>
+                                        </div>
+                                        <p class="text-muted mb-0 mt-3">@ticket.Description</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div id="team" class="tab-pane fade">
+                    @if (teamMembers == null)
+                    {
+                        <p class="text-muted">Loading team members...</p>
+                    }
+                    else if (teamMembers.Count == 0)
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-people text-muted fs-1 mb-3 d-block"></i>
+                            <h5 class="text-white">No team members assigned</h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var member in teamMembers)
+                            {
+                                <div class="col-md-4">
+                                    <div class="glass-card p-3 d-flex align-items-center gap-3">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-info), #2563eb);">
+                                            <span class="text-white fw-bold">@member.User.FullName.Substring(0,1)</span>
+                                        </div>
+                                        <div>
+                                            <div class="text-white fw-medium">@member.User.FullName</div>
+                                            <small class="text-info">@member.Role</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     }
 </div>
 
@@ -129,9 +197,9 @@
     {
         return status switch
         {
-            "Reported" => "warning",
+            "Reported" => "danger",
             "Assigned" => "info",
-            "In Progress" => "primary",
+            "In Progress" => "warning",
             "Completed" => "success",
             _ => "secondary"
         };

@@ -1,4 +1,142 @@
-@page "/offline-cache"
+@page "/admin/offline-cache"
+@using PredictiveGuard.Web.Services
+@using PredictiveGuard.Data.Models
+@inject ApiService ApiService
+@inject IJSRuntime JS
 
-<h3>Offline Cache</h3>
-<p>Paste your Offline Cache page code here!</p>
+<PageTitle>Offline Cache - Predictive Guard</PageTitle>
+
+<div class="container mt-4">
+    <h2>Offline Data Cache</h2>
+    <p class="text-muted">Last 48 hours of sensor data cached locally</p>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <button class="btn btn-primary" @onclick="CacheLast48Hours">Cache Last 48 Hours</button>
+            <button class="btn btn-secondary" @onclick="ClearCache">Clear Cache</button>
+        </div>
+        <div class="col-md-6">
+            <p class="text-end">
+                <small>Last cached: @lastCachedTime?.ToString("g") ?? "Never"</small>
+            </p>
+        </div>
+    </div>
+
+    @if (cachedAssets == null)
+    {
+        <p>Loading cache status...</p>
+    }
+    else if (cachedAssets.Count == 0)
+    {
+        <p class="alert alert-info">No cached data. Click "Cache Last 48 Hours" to populate.</p>
+    }
+    else
+    {
+        <table class="table table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Asset</th>
+                    <th>Readings Cached</th>
+                    <th>Time Range</th>
+                    <th>Latest Temp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var asset in cachedAssets)
+                {
+                    var readings = cachedReadings.ContainsKey(asset.Id) ? cachedReadings[asset.Id] : new();
+                    var latestTemp = readings.FirstOrDefault()?.Temperature ?? 0;
+                    var timeRange = readings.Any() 
+                        ? $"{readings.Last().Timestamp:g} to {readings.First().Timestamp:g}" 
+                        : "N/A";
+
+                    <tr>
+                        <td><strong>@asset.Name</strong></td>
+                        <td>@readings.Count</td>
+                        <td>@timeRange</td>
+                        <td>@latestTemp.ToString("F1")°C</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewCachedData(asset.Id)">View</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (showCachedData && cachedReadings.ContainsKey(selectedAssetId))
+    {
+        <div class="mt-4">
+            <h5>Cached Data for Asset @selectedAssetId</h5>
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Temperature (°C)</th>
+                        <th>Vibration (m/s²)</th>
+                        <th>Load (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reading in cachedReadings[selectedAssetId])
+                    {
+                        <tr>
+                            <td>@reading.Timestamp:g</td>
+                            <td>@reading.Temperature.ToString("F2")</td>
+                            <td>@reading.Vibration.ToString("F2")</td>
+                            <td>@reading.Load.ToString("F1")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Asset> cachedAssets;
+    private Dictionary<int, List<SensorReading>> cachedReadings = new();
+    private DateTime? lastCachedTime;
+    private bool showCachedData = false;
+    private int selectedAssetId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCacheStatus();
+    }
+
+    private async Task LoadCacheStatus()
+    {
+        cachedAssets = await ApiService.GetAssetsAsync();
+        lastCachedTime = DateTime.Now; // Would read from localStorage in real app
+    }
+
+    private async Task CacheLast48Hours()
+    {
+        cachedReadings.Clear();
+        cachedAssets = await ApiService.GetAssetsAsync();
+
+        foreach (var asset in cachedAssets)
+        {
+            var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 48);
+            cachedReadings[asset.Id] = readings;
+        }
+
+        lastCachedTime = DateTime.Now;
+        await JS.InvokeVoidAsync("alert", "48 hours of data cached locally!");
+    }
+
+    private async Task ClearCache()
+    {
+        cachedReadings.Clear();
+        lastCachedTime = null;
+        await JS.InvokeVoidAsync("alert", "Cache cleared.");
+    }
+
+    private void ViewCachedData(int assetId)
+    {
+        selectedAssetId = assetId;
+        showCachedData = true;
+    }
+}

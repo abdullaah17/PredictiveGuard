@@ -1,44 +1,40 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PredictiveGuard.Web</a>
-    </div>
+@inject IJSRuntime JSRuntime
+
+<div class="py-4 px-3 mb-4 text-center border-bottom" style="border-color: var(--border-color) !important;">
+    <a class="navbar-brand m-0 p-0 text-center" href="" style="text-decoration: none;">
+        <i class="bi bi-shield-check fs-2 text-primary mb-2 d-block mx-auto text-gradient"></i>
+        <div class="fs-4 text-white">Predictive<span class="fw-light">Guard</span></div>
+    </a>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<div class="nav-scrollable px-3">
+    <!-- Using the translated React Tabs component styling for the sidebar -->
+    <nav class="custom-tabs-list variant-default w-100" data-orientation="vertical">
+        <NavLink class="custom-tab w-100 justify-content-start" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-grid-1x2"></i> Overview
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
         <AuthorizeView>
             <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="admin">
-                        <span class="bi bi-shield-lock-fill-nav-menu" aria-hidden="true"></span> Admin
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="admin/offline-cache">
-                        <span class="bi bi-hdd-fill-nav-menu" aria-hidden="true"></span> Offline Cache
-                    </NavLink>
-                </div>
+                <NavLink class="custom-tab w-100 justify-content-start" href="admin">
+                    <i class="bi bi-cpu"></i> Admin Console
+                </NavLink>
+                <NavLink class="custom-tab w-100 justify-content-start" href="admin/offline-cache">
+                    <i class="bi bi-cloud-arrow-down"></i> Offline Cache
+                </NavLink>
             </Authorized>
         </AuthorizeView>
+        
+        <div class="custom-tab-indicator"></div>
     </nav>
 </div>
 
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initAnimatedTabs");
+        }
+    }
+}

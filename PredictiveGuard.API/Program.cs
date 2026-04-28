@@ -16,6 +16,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register real-time data simulator
+builder.Services.AddHostedService<SensorDataSimulatorService>();
+
 // CORS for Blazor
 builder.Services.AddCors(options =>
 {

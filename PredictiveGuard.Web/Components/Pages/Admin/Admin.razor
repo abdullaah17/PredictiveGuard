@@ -1,4 +1,552 @@
 @page "/admin"
+@implements IDisposable
+@using PredictiveGuard.Web.Services
+@using PredictiveGuard.Data.Models
+@inject ApiService ApiService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
 
-<h3>Admin Area</h3>
-<p>Paste your Admin page code here!</p>
+<PageTitle>Admin Dashboard - Predictive Guard</PageTitle>
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="mb-1 text-gradient">Admin Control Center</h1>
+            <p class="text-muted mb-0">Monitor and manage all industrial assets</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="glass-panel px-3 py-2 d-flex align-items-center gap-2">
+                <div class="spinner-grow spinner-grow-sm text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="text-success fw-medium">System Online</span>
+            </div>
+            <button class="btn-modern" @onclick="RefreshData">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <AuthorizeView>
+        <Authorized>
+            <!-- Health Summary Cards -->
+            <div class="row mb-5 g-4">
+                <div class="col-md-3">
+                    <div class="stat-card" role="region" aria-label="Total Assets: @totalAssets">
+                        <div class="stat-value-row">
+                            <span class="stat-value" data-target="@totalAssets">0</span>
+                        </div>
+                        <p class="stat-title">Total Assets</p>
+                        <div class="stat-change">
+                            <span class="stat-change-icon positive">
+                                <i class="bi bi-arrow-up-short"></i>
+                            </span>
+                            <p class="stat-change-text">
+                                <span class="stat-change-value positive">+12%</span>
+                                <span> from last month</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" role="region" aria-label="Active Alerts: @activeAlerts">
+                        <div class="stat-value-row">
+                            <span class="stat-value" data-target="@activeAlerts">0</span>
+                        </div>
+                        <p class="stat-title">Active Alerts</p>
+                        <div class="stat-change">
+                            <span class="stat-change-icon negative">
+                                <i class="bi bi-arrow-down-short"></i>
+                            </span>
+                            <p class="stat-change-text">
+                                <span class="stat-change-value negative">-8%</span>
+                                <span> from last week</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" role="region" aria-label="Assigned Tickets: @assignedTickets">
+                        <div class="stat-value-row">
+                            <span class="stat-value" data-target="@assignedTickets">0</span>
+                        </div>
+                        <p class="stat-title">Assigned Tickets</p>
+                        <div class="stat-change">
+                            <span class="stat-change-icon positive">
+                                <i class="bi bi-arrow-up-short"></i>
+                            </span>
+                            <p class="stat-change-text">
+                                <span class="stat-change-value positive">+3%</span>
+                                <span> from last week</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" role="region" aria-label="Completed Today: @completedToday">
+                        <div class="stat-value-row">
+                            <span class="stat-value" data-target="@completedToday">0</span>
+                        </div>
+                        <p class="stat-title">Completed Today</p>
+                        <div class="stat-change">
+                            <span class="stat-change-icon positive">
+                                <i class="bi bi-arrow-up-short"></i>
+                            </span>
+                            <p class="stat-change-text">
+                                <span class="stat-change-value positive">+24%</span>
+                                <span> from yesterday</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="glass-panel p-4 mb-4">
+                <nav class="custom-tabs-list variant-underline w-100 mb-4" data-orientation="horizontal" role="tablist">
+                    <a class="custom-tab active" data-bs-toggle="tab" href="#assets-health">
+                        <i class="bi bi-activity me-2"></i> Asset Health
+                    </a>
+                    <a class="custom-tab" data-bs-toggle="tab" href="#alert-escalation">
+                        <i class="bi bi-bell me-2"></i> Alert Escalation
+                    </a>
+                    <a class="custom-tab" data-bs-toggle="tab" href="#users-teams">
+                        <i class="bi bi-people me-2"></i> Users & Teams
+                    </a>
+                    <div class="custom-tab-indicator"></div>
+                </nav>
+
+                <div class="tab-content">
+                    <!-- Asset Health Tab -->
+                    <div id="assets-health" class="tab-pane fade show active">
+                        @if (assets == null)
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-3">Loading asset health data...</p>
+                            </div>
+                        }
+                        else if (assets.Count == 0)
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                                <h5>No assets found</h5>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="admin-health-grid">
+                                <div class="health-grid-header">
+                                    <span>Asset Name</span>
+                                    <span>Type</span>
+                                    <span>Location</span>
+                                    <span>Last Reading</span>
+                                    <span>Temp</span>
+                                    <span>Vib</span>
+                                    <span>Load</span>
+                                    <span>RUL Status</span>
+                                    <span>Action</span>
+                                </div>
+
+                                @foreach (var asset in assets)
+                                {
+                                    var lastReading = latestReadings.ContainsKey(asset.Id) ? latestReadings[asset.Id] : null;
+                                    var rulStatus = CalculateRULStatus(lastReading);
+                                    
+                                    <div class="health-grid-row">
+                                        <div class="health-cell">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(241, 90, 36, 0.1); border: 1px solid rgba(241, 90, 36, 0.2);">
+                                                    <i class="bi bi-cpu" style="color: var(--accent-primary); font-size: 0.9rem;"></i>
+                                                </div>
+                                                <strong class="text-white">@asset.Name</strong>
+                                            </div>
+                                        </div>
+                                        <div class="health-cell health-cell-muted" title="@asset.Type">@asset.Type</div>
+                                        <div class="health-cell health-cell-muted">
+                                            <i class="bi bi-geo-alt me-1" style="font-size: 0.8rem;"></i>@asset.Location
+                                        </div>
+                                        <div class="health-cell health-cell-muted">
+                                            @(lastReading?.Timestamp.ToString("HH:mm:ss") ?? "No data")
+                                        </div>
+                                        <div class="health-cell">
+                                            <span class="@GetTempClass(lastReading?.Temperature) fw-medium">
+                                                @(lastReading?.Temperature.ToString("F1") ?? "-")
+                                            </span>
+                                        </div>
+                                        <div class="health-cell">
+                                            <span class="@GetVibrationClass(lastReading?.Vibration) fw-medium">
+                                                @(lastReading?.Vibration.ToString("F2") ?? "-")
+                                            </span>
+                                        </div>
+                                        <div class="health-cell">
+                                            <span class="text-white">@(lastReading?.Load.ToString("F0") ?? "-")%</span>
+                                        </div>
+                                        <div class="health-cell">
+                                            <span class="@GetRulBadgeClass(rulStatus) badge-no-wrap">
+                                                @rulStatus
+                                            </span>
+                                        </div>
+                                        <div class="health-cell text-end">
+                                            <a href="@($"asset/{asset.Id}")" class="btn-glass btn-sm" style="padding: 4px 12px; font-size: 0.75rem;">
+                                                Details <i class="bi bi-chevron-right ms-1"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Alert Escalation Tab -->
+                    <div id="alert-escalation" class="tab-pane fade">
+                        @if (tickets == null)
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-3">Loading tickets...</p>
+                            </div>
+                        }
+                        else if (tickets.Count == 0)
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-check-circle fs-1 text-success mb-3"></i>
+                                <h5>No maintenance tickets</h5>
+                                <p class="text-muted">System is fully healthy.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="accordion accordion-glass" id="ticketAccordion">
+                                @foreach (var ticket in tickets.OrderByDescending(t => t.CreatedAt))
+                                {
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ticket@ticket.Id">
+                                                <div class="d-flex align-items-center w-100 me-3">
+                                                    <span class="badge-glow @GetStatusBadgeClass(ticket.Status) me-3">@ticket.Status</span>
+                                                    <strong class="text-white me-2">@ticket.AlertType</strong>
+                                                    <span class="text-muted">- @ticket.Asset.Name</span>
+                                                    <span class="ms-auto text-muted small"><i class="bi bi-clock me-1"></i>@ticket.CreatedAt.ToString("g")</span>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="ticket@ticket.Id" class="accordion-collapse collapse" data-bs-parent="#ticketAccordion">
+                                            <div class="accordion-body p-4">
+                                                <div class="row">
+                                                    <div class="col-md-8">
+                                                        <h6 class="text-muted text-uppercase mb-2" style="font-size:0.85rem">Description</h6>
+                                                        <p class="mb-4 text-white">@ticket.Description</p>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-sm-6 mb-3">
+                                                                <h6 class="text-muted text-uppercase mb-1" style="font-size:0.85rem">Asset</h6>
+                                                                <div class="d-flex align-items-center gap-2 text-white">
+                                                                    <i class="bi bi-cpu text-primary"></i>
+                                                                    <span>@ticket.Asset.Name (@ticket.Asset.Location)</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6 mb-3">
+                                                                <h6 class="text-muted text-uppercase mb-1" style="font-size:0.85rem">Assigned To</h6>
+                                                                <div class="d-flex align-items-center gap-2 text-white">
+                                                                    <i class="bi bi-person text-info"></i>
+                                                                    <span>@(ticket.AssignedToUser?.FullName ?? "Unassigned")</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4 d-flex flex-column justify-content-center align-items-end border-start ps-4" style="border-color:var(--border-color)!important">
+                                                        <h6 class="text-muted text-uppercase mb-3 w-100 text-end" style="font-size:0.85rem">Actions</h6>
+                                                        @if (ticket.Status != "Completed")
+                                                        {
+                                                            <div class="d-flex flex-column gap-2 w-100">
+                                                                @if (string.IsNullOrEmpty(ticket.AssignedToUserId?.ToString()) || ticket.AssignedToUserId == 0)
+                                                                {
+                                                                    <button class="btn-glass text-info w-100" style="border-color:rgba(14,165,233,0.3)" @onclick="() => ShowAssignModal(ticket)"><i class="bi bi-person-plus me-2"></i>Assign Engineer</button>
+                                                                }
+                                                                @if (ticket.Status == "Reported")
+                                                                {
+                                                                    <button class="btn-glass text-primary w-100" style="border-color:rgba(59,130,246,0.3)" @onclick='() => UpdateStatus(ticket.Id, "Assigned")'>Mark Assigned</button>
+                                                                }
+                                                                @if (ticket.Status == "Assigned")
+                                                                {
+                                                                    <button class="btn-glass text-warning w-100" style="border-color:rgba(245,158,11,0.3)" @onclick='() => UpdateStatus(ticket.Id, "In Progress")'>Start Work</button>
+                                                                }
+                                                                @if (ticket.Status == "In Progress")
+                                                                {
+                                                                    <button class="btn-glass text-success w-100" style="border-color:rgba(16,185,129,0.3)" @onclick='() => UpdateStatus(ticket.Id, "Completed")'><i class="bi bi-check2-circle me-2"></i>Complete</button>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="text-success text-end w-100">
+                                                                <i class="bi bi-check-circle-fill fs-3 mb-2 d-block"></i>
+                                                                <span class="d-block fw-bold">Completed</span>
+                                                                <small class="text-muted">@ticket.CompletedAt?.ToString("g")</small>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Users & Teams Tab -->
+                    <div id="users-teams" class="tab-pane fade">
+                        @if (users == null)
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-3">Loading users...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table-glass">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Joined</th>
+                                            <th>Assets Handled</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var user in users)
+                                        {
+                                            var assetCount = assetMembers.Where(am => am.UserId == user.Id).Count();
+                                            
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent-info), #2563eb);">
+                                                            <span class="text-white fw-bold">@user.FullName.Substring(0,1)</span>
+                                                        </div>
+                                                        <strong class="text-white">@user.FullName</strong>
+                                                    </div>
+                                                </td>
+                                                <td><span class="text-muted">@user.Email</span></td>
+                                                <td><span class="badge-glow badge-secondary">@(assetMembers.FirstOrDefault(am => am.UserId == user.Id)?.Role ?? "Engineer")</span></td>
+                                                <td><span class="text-muted">@user.CreatedAt.ToString("MMM dd, yyyy")</span></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="bi bi-cpu text-muted"></i>
+                                                        <span class="fw-bold text-white">@assetCount</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="glass-panel p-5 text-center mt-5 mx-auto" style="max-width: 500px;">
+                <i class="bi bi-shield-lock text-danger fs-1 mb-3 d-block"></i>
+                <h3>Access Denied</h3>
+                <p class="text-muted">You need administrator privileges to view this page.</p>
+                <a href="/" class="btn-modern mt-3">Return to Home</a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<!-- Assign Modal -->
+@if (showAssignModal && selectedTicket != null)
+{
+    <div class="modal show d-block modal-glass" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title text-white"><i class="bi bi-person-plus me-2 text-primary"></i>Assign Ticket</h5>
+                    <button type="button" class="btn-close" @onclick="() => showAssignModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <small class="text-muted text-uppercase">Ticket</small>
+                        <div class="fw-bold text-white fs-5">@selectedTicket.AlertType</div>
+                        <div class="text-muted">@selectedTicket.Asset.Name</div>
+                    </div>
+                    
+                    <p class="text-white mb-2">Select engineer to assign:</p>
+                    <select class="form-select form-select-lg mb-3" @bind="selectedUserId">
+                        <option value="">-- Select Engineer --</option>
+                        @foreach (var user in users ?? new())
+                        {
+                            <option value="@user.Id">@user.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn-glass" @onclick="() => showAssignModal = false">Cancel</button>
+                    <button type="button" class="btn-modern px-4" @onclick="AssignTicket">Assign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Asset> assets;
+    private List<MaintenanceTicket> tickets;
+    private List<User> users;
+    private List<AssetTeamMember> assetMembers;
+    private Dictionary<int, SensorReading> latestReadings = new();
+
+    private int totalAssets = 0;
+    private int activeAlerts = 0;
+    private int assignedTickets = 0;
+    private int completedToday = 0;
+
+    private bool showAssignModal = false;
+    private MaintenanceTicket selectedTicket;
+    private string selectedUserId = "";
+
+    private System.Threading.Timer _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAdminData();
+        
+        // Setup real-time polling every 5 seconds
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadAdminData();
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
+            });
+        }, null, 5000, 5000);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
+        await JSRuntime.InvokeVoidAsync("initAnimatedTabs");
+    }
+
+    private async Task LoadAdminData()
+    {
+        assets = await ApiService.GetAssetsAsync();
+        tickets = await ApiService.GetTicketsAsync();
+        users = await ApiService.GetUsersAsync();
+
+        totalAssets = assets?.Count ?? 0;
+        activeAlerts = tickets?.Where(t => t.Status != "Completed").Count() ?? 0;
+        assignedTickets = tickets?.Where(t => t.Status == "Assigned").Count() ?? 0;
+        completedToday = tickets?.Where(t => t.CompletedAt.HasValue && t.CompletedAt.Value.Date == DateTime.Today).Count() ?? 0;
+
+        // Load latest readings for each asset
+        foreach (var asset in assets ?? new())
+        {
+            var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 1);
+            if (readings.Any())
+            {
+                latestReadings[asset.Id] = readings.First();
+            }
+        }
+
+        // Load team members
+        assetMembers = new();
+        foreach (var asset in assets ?? new())
+        {
+            var members = await ApiService.GetTeamMembersAsync(asset.Id);
+            assetMembers.AddRange(members);
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadAdminData();
+        StateHasChanged();
+        await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
+    }
+
+    private string CalculateRULStatus(SensorReading reading)
+    {
+        if (reading == null) return "No Data";
+        if (reading.Temperature > 80) return "Critical";
+        if (reading.Temperature > 70) return "Warning";
+        if (reading.Vibration > 5.0) return "Warning";
+        return "Healthy";
+    }
+
+    private string GetTempClass(double? temp)
+    {
+        if (temp == null) return "";
+        if (temp > 80) return "text-danger fw-bold";
+        if (temp > 70) return "text-warning fw-bold";
+        return "text-success";
+    }
+
+    private string GetVibrationClass(double? vib)
+    {
+        if (vib == null) return "";
+        if (vib > 5.0) return "text-danger fw-bold";
+        if (vib > 3.0) return "text-warning fw-bold";
+        return "text-success";
+    }
+
+    private string GetRulBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Critical" => "badge-glow badge-danger",
+            "Warning" => "badge-glow badge-warning",
+            "Healthy" => "badge-glow badge-success",
+            _ => "badge-glow badge-secondary"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Reported" => "badge-danger",
+            "Assigned" => "badge-info",
+            "In Progress" => "badge-warning",
+            "Completed" => "badge-success",
+            _ => "badge-secondary"
+        };
+    }
+
+    private void ShowAssignModal(MaintenanceTicket ticket)
+    {
+        selectedTicket = ticket;
+        showAssignModal = true;
+        selectedUserId = "";
+    }
+
+    private async Task AssignTicket()
+    {
+        if (string.IsNullOrEmpty(selectedUserId) || selectedTicket == null)
+            return;
+
+        await ApiService.AssignTicketAsync(selectedTicket.Id, int.Parse(selectedUserId));
+        showAssignModal = false;
+        await LoadAdminData();
+    }
+
+    private async Task UpdateStatus(int ticketId, string newStatus)
+    {
+        await ApiService.UpdateTicketStatusAsync(ticketId, newStatus);
+        await LoadAdminData();
+    }
+}

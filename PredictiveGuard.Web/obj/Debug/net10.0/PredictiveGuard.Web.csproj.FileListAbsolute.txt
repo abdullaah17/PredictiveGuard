@@ -93,12 +93,12 @@
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/Components/App.razor.rz.scp.css
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/Components/Layout/MainLayout.razor.rz.scp.css
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/Components/Layout/NavMenu.razor.rz.scp.css
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/Components/Layout/ReconnectModal.razor.rz.scp.css
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/bundle/PredictiveGuard.Web.styles.css
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/projectbundle/PredictiveGuard.Web.bundle.scp.css
-/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/e2jmhawgq4-{0}-khy4lop6wu-khy4lop6wu.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/tptj6ppczg-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/vcdq45dc7w-{0}-c2jlpeoesf-c2jlpeoesf.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/dhpew0s1we-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -146,6 +146,8 @@
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/45i3ro4zsb-{0}-abdmv1u4y3-abdmv1u4y3.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/tlqqlsw1fm-{0}-hwaxidwiwj-hwaxidwiwj.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/f0n2nv8lpq-{0}-xbbil6v7co-xbbil6v7co.gz
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/8enmeg5u01-{0}-zzdg4scden-zzdg4scden.gz
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/yv1cmq8ag9-{0}-zzdg4scden-zzdg4scden.gz
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/staticwebassets.build.json
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/staticwebassets.build.json.cache
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/staticwebassets.development.json
@@ -157,6 +159,5 @@
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/PredictiveGuard.Web.pdb
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/PredictiveGuard.Web.genruntimeconfig.cache
 /Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/ref/PredictiveGuard.Web.dll
-/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/scopedcss/Components/App.razor.rz.scp.css
-/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/8enmeg5u01-{0}-zzdg4scden-zzdg4scden.gz
-/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/yv1cmq8ag9-{0}-zzdg4scden-zzdg4scden.gz
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/02c5aur8bf-{0}-ip21vfa53u-ip21vfa53u.gz
+/Users/macbookpro/Desktop/PredictiveGuard/PredictiveGuard.Web/obj/Debug/net10.0/compressed/e2jmhawgq4-{0}-e49bie0347-e49bie0347.gz

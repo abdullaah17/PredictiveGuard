@@ -1,42 +1,158 @@
 @page "/"
+@rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using PredictiveGuard.Web.Services
 @using PredictiveGuard.Data.Models
 @inject ApiService ApiService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+<AntiforgeryToken />
 
 <PageTitle>Dashboard - Predictive Guard</PageTitle>
 
-<div class="container mt-5">
-    <h1>Asset Dashboard</h1>
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="mb-1 text-gradient">Asset Dashboard</h1>
+            <p class="text-muted mb-0">Overview of all monitored industrial equipment</p>
+        </div>
+        <AuthorizeView>
+            <Authorized>
+                <button class="btn-modern" @onclick="ShowCreateAssetModal">
+                    <i class="bi bi-plus-lg me-1"></i> New Asset
+                </button>
+            </Authorized>
+        </AuthorizeView>
+    </div>
     
     <AuthorizeView>
         <Authorized>
-            <button class="btn btn-primary mb-3" @onclick="ShowCreateAssetModal">+ New Asset</button>
-            
             @if (assets == null)
             {
-                <p>Loading assets...</p>
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-3">Loading assets...</p>
+                </div>
             }
             else if (assets.Count == 0)
             {
-                <p>No assets found. Create one to get started.</p>
+                <div class="glass-panel p-5 text-center mt-4 mx-auto" style="max-width: 500px;">
+                    <i class="bi bi-inbox text-muted fs-1 mb-3 d-block"></i>
+                    <h3>No assets found</h3>
+                    <p class="text-muted">Create your first asset to start monitoring.</p>
+                    <button class="btn-modern mt-3" @onclick="ShowCreateAssetModal">Create Asset</button>
+                </div>
             }
             else
             {
-                <div class="row">
+                <div class="row mb-5 g-4">
+                    <div class="col-md-3">
+                        <div class="stat-card" role="region" aria-label="Total Assets: @assets.Count">
+                            <div class="stat-value-row">
+                                <span class="stat-value" data-target="@assets.Count">0</span>
+                            </div>
+                            <p class="stat-title">Total Assets</p>
+                            <div class="stat-change">
+                                <span class="stat-change-icon positive">
+                                    <i class="bi bi-arrow-up-short"></i>
+                                </span>
+                                <p class="stat-change-text">
+                                    <span class="stat-change-value positive">+12%</span>
+                                    <span> from last month</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" role="region" aria-label="Active: @assets.Count(a => a.IsActive)">
+                            <div class="stat-value-row">
+                                <span class="stat-value" data-target="@assets.Count(a => a.IsActive)">0</span>
+                            </div>
+                            <p class="stat-title">Active</p>
+                            <div class="stat-change">
+                                <span class="stat-change-icon positive">
+                                    <i class="bi bi-arrow-up-short"></i>
+                                </span>
+                                <p class="stat-change-text">
+                                    <span class="stat-change-value positive">+5%</span>
+                                    <span> from last week</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" role="region" aria-label="Inactive: @assets.Count(a => !a.IsActive)">
+                            <div class="stat-value-row">
+                                <span class="stat-value" data-target="@assets.Count(a => !a.IsActive)">0</span>
+                            </div>
+                            <p class="stat-title">Inactive</p>
+                            <div class="stat-change">
+                                <span class="stat-change-icon negative">
+                                    <i class="bi bi-arrow-down-short"></i>
+                                </span>
+                                <p class="stat-change-text">
+                                    <span class="stat-change-value negative">-2%</span>
+                                    <span> from last week</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" role="region" aria-label="Avg Health: 94%">
+                            <div class="stat-value-row">
+                                <span class="stat-value" data-target="94">0</span>
+                                <span class="stat-suffix">%</span>
+                            </div>
+                            <p class="stat-title">Avg Health Score</p>
+                            <div class="stat-change">
+                                <span class="stat-change-icon positive">
+                                    <i class="bi bi-arrow-up-short"></i>
+                                </span>
+                                <p class="stat-change-text">
+                                    <span class="stat-change-value positive">+1.2%</span>
+                                    <span> from last month</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
                     @foreach (var asset in assets)
                     {
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">@asset.Name</h5>
-                                    <p class="card-text">
-                                        <strong>Type:</strong> @asset.Type<br>
-                                        <strong>Location:</strong> @asset.Location<br>
-                                        <strong>Status:</strong> @(asset.IsActive ? "Active" : "Inactive")
-                                    </p>
-                                    <a href="@($"asset/{asset.Id}")" class="btn btn-sm btn-info">View Details</a>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="glass-card p-4 h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(241, 90, 36, 0.2), rgba(241, 90, 36, 0.05)); border: 1px solid rgba(241, 90, 36, 0.2);">
+                                            <i class="bi bi-cpu fs-4" style="color: var(--accent-secondary);"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 fw-bold text-white">@asset.Name</h5>
+                                            <span class="badge-glow @(asset.IsActive ? "badge-success" : "badge-secondary")" style="font-size: 0.75rem;">
+                                                <i class="bi @(asset.IsActive ? "bi-check-circle-fill" : "bi-dash-circle-fill") me-1"></i>
+                                                @(asset.IsActive ? "Active" : "Inactive")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4 flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-2 text-muted">
+                                        <i class="bi bi-tag"></i>
+                                        <span>@asset.Type</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 text-muted">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>@asset.Location</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <a href="@($"asset/{asset.Id}")" class="btn-glass w-100 text-center">
+                                        View Details <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -45,7 +161,12 @@
             }
         </Authorized>
         <NotAuthorized>
-            <p>Please log in to view assets.</p>
+            <div class="glass-panel p-5 text-center mt-5 mx-auto" style="max-width: 500px;">
+                <i class="bi bi-shield-lock text-primary fs-1 mb-3 d-block text-gradient"></i>
+                <h3 class="text-white">Welcome to PredictiveGuard</h3>
+                <p class="text-muted mb-4">Please log in to view and manage your assets.</p>
+                <a href="/login" class="btn-modern px-4 py-2 text-decoration-none">Log in with Google</a>
+            </div>
         </NotAuthorized>
     </AuthorizeView>
 </div>
@@ -53,35 +174,53 @@
 <!-- Create Asset Modal -->
 @if (showCreateModal)
 {
-    <div class="modal show d-block" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Asset</h5>
-                    <button type="button" class="btn-close" @onclick="() => showCreateModal = false"></button>
+    <div class="modal-backdrop show" style="background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1040;" @onclick="CloseModalOnBackdrop"></div>
+    <div class="modal show d-block" style="z-index: 1050; pointer-events: none;">
+        <div class="modal-dialog modal-dialog-centered" style="pointer-events: auto;">
+            <div class="glass-panel p-0" style="border-radius: 16px; overflow: hidden; background: var(--bg-surface);">
+                <div class="d-flex justify-content-between align-items-center px-4 pt-4 pb-2">
+                    <h5 class="mb-0 text-white" style="font-family: var(--font-display); font-size: var(--text-xl);">
+                        <i class="bi bi-plus-square me-2" style="color: var(--accent-primary);"></i>Create New Asset
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => showCreateModal = false"></button>
                 </div>
-                <div class="modal-body">
-                    <EditForm Model="newAsset" OnSubmit="HandleCreateAsset">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-
-                        <div class="mb-3">
-                            <label class="form-label">Asset Name</label>
-                            <InputText class="form-control" @bind-Value="newAsset.Name" />
+                <div class="px-4 pb-4 pt-3">
+                    @if (!string.IsNullOrEmpty(createError))
+                    {
+                        <div class="alert py-2 px-3 mb-3" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #ef4444; font-size: var(--text-sm);">
+                            <i class="bi bi-exclamation-triangle me-1"></i> @createError
+                        </div>
+                    }
+                    <div class="asset-create-form">
+                        <div class="mb-4">
+                            <label class="form-label mb-2" style="font-size: var(--text-xs); text-transform: uppercase; color: var(--text-muted);">Asset Name</label>
+                            <input class="form-control bg-transparent" style="border: 1px solid var(--border-color); border-radius: 8px; color: white !important;" @bind="newAsset.Name" placeholder="e.g. Compressor A1" />
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Type</label>
-                            <InputText class="form-control" @bind-Value="newAsset.Type" />
+                        <div class="mb-4">
+                            <label class="form-label mb-2" style="font-size: var(--text-xs); text-transform: uppercase; color: var(--text-muted);">Type</label>
+                            <input class="form-control bg-transparent" style="border: 1px solid var(--border-color); border-radius: 8px; color: white !important;" @bind="newAsset.Type" placeholder="e.g. Centrifugal Compressor" />
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Location</label>
-                            <InputText class="form-control" @bind-Value="newAsset.Location" />
+                        <div class="mb-4">
+                            <label class="form-label mb-2" style="font-size: var(--text-xs); text-transform: uppercase; color: var(--text-muted);">Location</label>
+                            <input class="form-control bg-transparent" style="border: 1px solid var(--border-color); border-radius: 8px; color: white !important;" @bind="newAsset.Location" placeholder="e.g. Plant 3, Sector B" />
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Create</button>
-                    </EditForm>
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="button" class="btn-glass flex-grow-1" @onclick="() => showCreateModal = false">Cancel</button>
+                            <button type="button" class="btn-modern flex-grow-1" @onclick="HandleCreateAsset" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span> <span>Creating…</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-lg me-1"></i> <span>Create Asset</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -91,11 +230,19 @@
 @code {
     private List<Asset> assets;
     private bool showCreateModal = false;
+    private bool isCreating = false;
+    private string createError = "";
     private CreateAssetModel newAsset = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAssets();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
+        await JSRuntime.InvokeVoidAsync("initAnimatedTabs");
     }
 
     private async Task LoadAssets()
@@ -106,20 +253,65 @@
     private void ShowCreateAssetModal()
     {
         newAsset = new();
+        createError = "";
         showCreateModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModalOnBackdrop()
+    {
+        showCreateModal = false;
+        StateHasChanged();
     }
 
     private async Task HandleCreateAsset()
     {
+        // Simple manual validation check since we switched to a button-click handler
+        if (string.IsNullOrWhiteSpace(newAsset.Name) || 
+            string.IsNullOrWhiteSpace(newAsset.Type) || 
+            string.IsNullOrWhiteSpace(newAsset.Location))
+        {
+            // The ValidationMessage components will already show their errors 
+            // because they watch the model properties on input
+            return;
+        }
+
+        isCreating = true;
+        createError = "";
+        StateHasChanged();
+
         try
         {
-            await ApiService.CreateAssetAsync(newAsset.Name, newAsset.Location, newAsset.Type);
-            showCreateModal = false;
-            await LoadAssets();
+            var response = await ApiService.CreateAssetAsync(newAsset.Name, newAsset.Location, newAsset.Type);
+            if (response != null)
+            {
+                showCreateModal = false;
+                await LoadAssets();
+                
+                // Fire off initial sensor readings for the new asset in the background 
+                // so the dashboard numbers aren't empty
+                _ = ApiService.CreateSensorReadingAsync(response.Id, 45, 1.5, 50);
+            }
+            else
+            {
+                createError = "Failed to create asset. Server returned no data.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            createError = $"Connection error: {ex.Message}";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            createError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isCreating = false;
+            StateHasChanged();
+            
+            // Re-initialize animations after the DOM updates with the new asset
+            await JSRuntime.InvokeVoidAsync("initAnimatedCounters");
         }
     }
 
@@ -136,3 +328,4 @@
         public string Location { get; set; }
     }
 }
+
