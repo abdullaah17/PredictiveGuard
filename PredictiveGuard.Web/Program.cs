@@ -58,6 +58,16 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
+// Force HTTPS scheme on Render/Production to ensure Google OAuth redirect URIs use https
+if (!app.Environment.IsDevelopment())
+{
+    app.Use((context, next) =>
+    {
+        context.Request.Scheme = "https";
+        return next();
+    });
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
