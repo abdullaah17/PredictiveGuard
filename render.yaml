@@ -4,12 +4,8 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
-    disk:
-      name: predictiveguard-data
-      mountPath: /app/data
-      sizeGB: 1
     envVars:
       - key: ConnectionStrings__DefaultConnection
-        value: "Data Source=/app/data/PredictiveGuard.db"
+        value: "Data Source=/app/PredictiveGuard.db"
       - key: ApiBaseUrl
         value: "http://127.0.0.1:5000"
