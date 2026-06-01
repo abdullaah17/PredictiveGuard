@@ -3,148 +3,396 @@
 @using PredictiveGuard.Data.Models
 @inject ApiService ApiService
 @inject IJSRuntime JS
+@rendermode InteractiveServer
 
 <PageTitle>Offline Cache - Predictive Guard</PageTitle>
 
-<div class="container mt-4">
-    <h2>Offline Data Cache</h2>
-    <p class="text-muted">Last 48 hours of sensor data cached locally</p>
+<div class="container-fluid mt-2">
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <button class="btn btn-primary" @onclick="CacheLast48Hours">Cache Last 48 Hours</button>
-            <button class="btn btn-secondary" @onclick="ClearCache">Clear Cache</button>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="mb-1 text-gradient">Offline Data Cache</h1>
+            <p class="text-muted mb-0">48-hour rolling sensor history cached for offline access</p>
         </div>
-        <div class="col-md-6">
-            <p class="text-end">
-                <small>Last cached: @lastCachedTime?.ToString("g") ?? "Never"</small>
-            </p>
+        <div class="d-flex gap-2">
+            <button class="btn-glass" @onclick="ClearCache" disabled="@isSyncing">
+                <i class="bi bi-trash me-1"></i> Clear Cache
+            </button>
+            <button class="btn-modern" @onclick="SyncCache" disabled="@isSyncing">
+                @if (isSyncing)
+                {
+                    <span class="spinner-border spinner-border-sm me-1"></span><span>Syncing…</span>
+                }
+                else
+                {
+                    <i class="bi bi-arrow-repeat me-1"></i><span>Sync Now</span>
+                }
+            </button>
         </div>
     </div>
 
+    <!-- Storage Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value-row">
+                    <span class="stat-value">@totalReadings</span>
+                </div>
+                <p class="stat-title">Total Cached Readings</p>
+                <div class="stat-change">
+                    <span class="stat-change-icon positive"><i class="bi bi-arrow-up-short"></i></span>
+                    <p class="stat-change-text"><span class="stat-change-value positive">live</span> <span>from API</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value-row">
+                    <span class="stat-value">@assetsWithData</span>
+                </div>
+                <p class="stat-title">Assets with Cache</p>
+                <div class="stat-change">
+                    <span class="stat-change-icon positive"><i class="bi bi-check-circle"></i></span>
+                    <p class="stat-change-text"><span class="stat-change-value positive">synced</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value-row">
+                    <span class="stat-value">48</span>
+                    <span class="stat-suffix">h</span>
+                </div>
+                <p class="stat-title">Cache Window</p>
+                <div class="stat-change">
+                    <span class="stat-change-icon positive"><i class="bi bi-clock-history"></i></span>
+                    <p class="stat-change-text"><span>rolling window</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value-row">
+                    <span class="stat-value">@estimatedSizeKb</span>
+                    <span class="stat-suffix">KB</span>
+                </div>
+                <p class="stat-title">Estimated Size</p>
+                <div class="stat-change">
+                    <span class="stat-change-icon positive"><i class="bi bi-database"></i></span>
+                    <p class="stat-change-text"><span>in memory</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Status Bar -->
+    <div class="glass-panel p-4 mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:40px;height:40px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">
+                <i class="bi bi-wifi text-success fs-5"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-white">Sync Status</div>
+                <small class="text-muted">
+                    @if (lastSyncTime.HasValue)
+                    {
+                        <span>Last synced: <span class="text-success">@lastSyncTime.Value.ToString("ddd, MMM dd HH:mm:ss") UTC</span></span>
+                    }
+                    else
+                    {
+                        <span class="text-warning">Never synced — click Sync Now to populate cache</span>
+                    }
+                </small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="progress" style="width:200px;height:8px;background:var(--bg-elevated);border-radius:4px;">
+                <div class="progress-bar" role="progressbar"
+                     style="width:@storagePct%;background:linear-gradient(90deg,var(--accent-primary),var(--accent-secondary));border-radius:4px;"
+                     aria-valuenow="@storagePct" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+            <small class="text-muted">@storagePct% used</small>
+        </div>
+    </div>
+
+    <!-- Per-Asset Cache Cards -->
     @if (cachedAssets == null)
     {
-        <p>Loading cache status...</p>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-3">Loading cache status…</p>
+        </div>
     }
     else if (cachedAssets.Count == 0)
     {
-        <p class="alert alert-info">No cached data. Click "Cache Last 48 Hours" to populate.</p>
+        <div class="glass-panel p-5 text-center mx-auto" style="max-width:480px;">
+            <i class="bi bi-database-x fs-1 text-muted mb-3 d-block"></i>
+            <h5 class="text-white">No assets found</h5>
+            <p class="text-muted">Make sure the API is reachable and assets have been seeded.</p>
+        </div>
     }
     else
     {
-        <table class="table table-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Asset</th>
-                    <th>Readings Cached</th>
-                    <th>Time Range</th>
-                    <th>Latest Temp</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var asset in cachedAssets)
-                {
-                    var readings = cachedReadings.ContainsKey(asset.Id) ? cachedReadings[asset.Id] : new();
-                    var latestTemp = readings.FirstOrDefault()?.Temperature ?? 0;
-                    var timeRange = readings.Any() 
-                        ? $"{readings.Last().Timestamp:g} to {readings.First().Timestamp:g}" 
-                        : "N/A";
+        <div class="row g-4 mb-4">
+            @foreach (var asset in cachedAssets)
+            {
+                var readings = cachedReadings.ContainsKey(asset.Id) ? cachedReadings[asset.Id] : new();
+                var latest = readings.FirstOrDefault();
+                var oldest = readings.LastOrDefault();
+                var hasData = readings.Any();
+                var trend = hasData && readings.Count > 1
+                    ? readings[0].Temperature - readings[1].Temperature
+                    : 0;
+                var isSelected = selectedAssetId == asset.Id && showDetail;
 
-                    <tr>
-                        <td><strong>@asset.Name</strong></td>
-                        <td>@readings.Count</td>
-                        <td>@timeRange</td>
-                        <td>@latestTemp.ToString("F1")°C</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewCachedData(asset.Id)">View</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-card p-4 h-100 d-flex flex-column @(isSelected ? "selected-cache-card" : "")">
+                        <!-- Asset Header -->
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:44px;height:44px;background:linear-gradient(135deg,rgba(241,90,36,0.2),rgba(241,90,36,0.05));border:1px solid rgba(241,90,36,0.25);">
+                                    <i class="bi bi-cpu" style="color:var(--accent-secondary);font-size:1.1rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-white">@asset.Name</h6>
+                                    <small class="text-muted">@asset.Type</small>
+                                </div>
+                            </div>
+                            @if (hasData)
+                            {
+                                <span class="badge-glow badge-success" style="font-size:0.7rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Cached
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge-glow badge-secondary" style="font-size:0.7rem;">
+                                    <i class="bi bi-hourglass me-1"></i>Empty
+                                </span>
+                            }
+                        </div>
 
-    @if (showCachedData && cachedReadings.ContainsKey(selectedAssetId))
-    {
-        <div class="mt-4">
-            <h5>Cached Data for Asset @selectedAssetId</h5>
-            <table class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Temperature (°C)</th>
-                        <th>Vibration (m/s²)</th>
-                        <th>Load (%)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var reading in cachedReadings[selectedAssetId])
-                    {
-                        <tr>
-                            <td>@reading.Timestamp:g</td>
-                            <td>@reading.Temperature.ToString("F2")</td>
-                            <td>@reading.Vibration.ToString("F2")</td>
-                            <td>@reading.Load.ToString("F1")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                        <!-- Mini Metrics Row -->
+                        @if (hasData)
+                        {
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border-color);">
+                                        <div class="fw-bold @(latest.Temperature > 75 ? "text-danger" : latest.Temperature > 60 ? "text-warning" : "text-success")" style="font-size:1rem;">
+                                            @latest.Temperature.ToString("F1")°
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.65rem;">TEMP</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border-color);">
+                                        <div class="fw-bold @(latest.Vibration > 4 ? "text-danger" : latest.Vibration > 2.5 ? "text-warning" : "text-success")" style="font-size:1rem;">
+                                            @latest.Vibration.ToString("F2")
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.65rem;">VIB</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border-color);">
+                                        <div class="fw-bold text-info" style="font-size:1rem;">
+                                            @latest.Load.ToString("F0")%
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.65rem;">LOAD</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reading Count + Time Range -->
+                            <div class="mb-3 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">@readings.Count readings cached</small>
+                                    <small class="@(trend > 0.5 ? "text-danger" : trend < -0.5 ? "text-success" : "text-muted")">
+                                        @(trend > 0.5 ? "↑" : trend < -0.5 ? "↓" : "→") @Math.Abs(trend).ToString("F1")°C
+                                    </small>
+                                </div>
+                                <div class="progress mb-2" style="height:4px;background:var(--bg-elevated);border-radius:2px;">
+                                    <div class="progress-bar"
+                                         style="width:@Math.Min(readings.Count * 2, 100)%;background:linear-gradient(90deg,var(--accent-info),var(--accent-primary));border-radius:2px;"></div>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @oldest?.Timestamp.ToString("MMM dd HH:mm") → @latest?.Timestamp.ToString("MMM dd HH:mm")
+                                </small>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="flex-grow-1 d-flex align-items-center justify-content-center py-3">
+                                <div class="text-center text-muted">
+                                    <i class="bi bi-cloud-slash fs-3 mb-2 d-block"></i>
+                                    <small>No data cached yet</small>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Action -->
+                        <div class="mt-auto">
+                            @if (hasData)
+                            {
+                                <button class="btn-glass w-100 text-center"
+                                        @onclick="() => ToggleDetail(asset.Id)">
+                                    @(isSelected ? "Hide Readings" : "View Readings")
+                                    <i class="bi @(isSelected ? "bi-chevron-up" : "bi-chevron-down") ms-1"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn-glass w-100 text-center text-muted" disabled>
+                                    <i class="bi bi-database me-1"></i>No data
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
+
+        <!-- Inline Readings Detail Panel -->
+        @if (showDetail && selectedAssetId > 0 && cachedReadings.ContainsKey(selectedAssetId))
+        {
+            var detailAsset = cachedAssets.FirstOrDefault(a => a.Id == selectedAssetId);
+            var detailReadings = cachedReadings[selectedAssetId];
+            <div class="glass-panel p-4 mb-4 animate__animated animate__fadeIn">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="text-white mb-0">
+                            <i class="bi bi-table me-2" style="color:var(--accent-primary);"></i>
+                            Cached Readings — @detailAsset?.Name
+                        </h5>
+                        <small class="text-muted">Showing last @detailReadings.Count entries from 48h window</small>
+                    </div>
+                    <button class="btn-glass btn-sm" @onclick="CloseDetail">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+                    <table class="table-glass w-100">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Timestamp</th>
+                                <th>Temp (°C)</th>
+                                <th>Vibration (m/s²)</th>
+                                <th>Load (%)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{int idx = 1;}
+                            @foreach (var r in detailReadings)
+                            {
+                                var status = r.Temperature > 80 ? "Critical" : r.Temperature > 70 ? "Warning" : "Normal";
+                                var statusClass = status == "Critical" ? "badge-danger" : status == "Warning" ? "badge-warning" : "badge-success";
+                                <tr>
+                                    <td class="text-muted">@idx</td>
+                                    <td class="text-white">@r.Timestamp.ToString("MMM dd, HH:mm:ss")</td>
+                                    <td class="@(r.Temperature > 75 ? "text-danger fw-bold" : r.Temperature > 60 ? "text-warning" : "text-success")">
+                                        @r.Temperature.ToString("F2")
+                                    </td>
+                                    <td class="@(r.Vibration > 4 ? "text-danger fw-bold" : r.Vibration > 2.5 ? "text-warning" : "text-success")">
+                                        @r.Vibration.ToString("F3")
+                                    </td>
+                                    <td class="text-info">@r.Load.ToString("F1")</td>
+                                    <td><span class="badge-glow @statusClass" style="font-size:0.7rem;">@status</span></td>
+                                </tr>
+                                idx++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
     }
 </div>
 
 @code {
     private List<Asset> cachedAssets;
     private Dictionary<int, List<SensorReading>> cachedReadings = new();
-    private DateTime? lastCachedTime;
-    private bool showCachedData = false;
+    private DateTime? lastSyncTime;
+    private bool isSyncing = false;
+    private bool showDetail = false;
     private int selectedAssetId = 0;
+
+    private int totalReadings => cachedReadings.Values.Sum(r => r.Count);
+    private int assetsWithData => cachedReadings.Count(kv => kv.Value.Any());
+    private int estimatedSizeKb => totalReadings * 28 / 1024; // ~28 bytes per reading
+    private int storagePct => Math.Min(totalReadings * 100 / Math.Max(cachedAssets?.Count * 48 ?? 1, 1), 100);
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCacheStatus();
+        var raw = await ApiService.GetAssetsAsync();
+        cachedAssets = raw?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
+
+        // Auto-load cache on page open
+        await SyncCache();
     }
 
-    private async Task LoadCacheStatus()
+    private async Task SyncCache()
     {
-        var rawAssets = await ApiService.GetAssetsAsync();
-        cachedAssets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
-        lastCachedTime = DateTime.UtcNow;
-    }
+        if (isSyncing) return;
+        isSyncing = true;
+        StateHasChanged();
 
-    private async Task CacheLast48Hours()
-    {
-        cachedReadings.Clear();
-        var rawAssets = await ApiService.GetAssetsAsync();
-        cachedAssets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
-
-        var cacheTasks = cachedAssets.Select(async asset => 
+        try
         {
-            var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 48);
-            return new { Id = asset.Id, Readings = readings };
-        });
+            var raw = await ApiService.GetAssetsAsync();
+            cachedAssets = raw?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
 
-        var results = await Task.WhenAll(cacheTasks);
-        foreach (var result in results)
-        {
-            cachedReadings[result.Id] = result.Readings;
+            var tasks = cachedAssets.Select(async asset =>
+            {
+                var readings = await ApiService.GetSensorReadingsAsync(asset.Id, hours: 48);
+                return (asset.Id, readings ?? new());
+            });
+
+            var results = await Task.WhenAll(tasks);
+            cachedReadings.Clear();
+            foreach (var (id, readings) in results)
+                cachedReadings[id] = readings;
+
+            lastSyncTime = DateTime.UtcNow;
         }
-
-        lastCachedTime = DateTime.UtcNow;
-        await JS.InvokeVoidAsync("alert", "48 hours of data cached locally!");
+        catch { /* Silently fail if API unreachable */ }
+        finally
+        {
+            isSyncing = false;
+            StateHasChanged();
+        }
     }
 
-    private async Task ClearCache()
+    private void ClearCache()
     {
         cachedReadings.Clear();
-        lastCachedTime = null;
-        await JS.InvokeVoidAsync("alert", "Cache cleared.");
+        lastSyncTime = null;
+        showDetail = false;
+        selectedAssetId = 0;
     }
 
-    private void ViewCachedData(int assetId)
+    private void ToggleDetail(int assetId)
     {
-        selectedAssetId = assetId;
-        showCachedData = true;
+        if (selectedAssetId == assetId && showDetail)
+        {
+            showDetail = false;
+            selectedAssetId = 0;
+        }
+        else
+        {
+            selectedAssetId = assetId;
+            showDetail = true;
+        }
+    }
+
+    private void CloseDetail()
+    {
+        showDetail = false;
+        selectedAssetId = 0;
     }
 }
