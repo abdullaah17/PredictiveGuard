@@ -1,6 +1,8 @@
 using PredictiveGuard.Data.Data;
 using PredictiveGuard.Data.Models;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace PredictiveGuard.API.Services;
 
 public class DataSeeder
@@ -11,6 +13,8 @@ public class DataSeeder
 
     public async Task SeedAsync()
     {
+        await _db.Database.MigrateAsync();
+
         if (_db.Assets.Count() >= 30)
             return; // Already seeded
 
