@@ -12,8 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Data Source=../PredictiveGuard.API/PredictiveGuard.db";
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite("Data Source=../PredictiveGuard.API/PredictiveGuard.db"));
+    options.UseSqlite(connectionString));
 
 // HTTP Client for API calls
 builder.Services.AddHttpClient("API", client =>
