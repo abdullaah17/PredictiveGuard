@@ -5,6 +5,8 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
       - key: ConnectionStrings__DefaultConnection
         value: "Data Source=/app/PredictiveGuard.db"
       - key: ApiBaseUrl

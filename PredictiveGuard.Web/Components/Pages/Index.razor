@@ -236,7 +236,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAssets();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            await LoadAssets();
+        }
+        else
+        {
+            assets = new();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -247,8 +255,16 @@
 
     private async Task LoadAssets()
     {
-        var rawAssets = await ApiService.GetAssetsAsync();
-        assets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
+        try
+        {
+            var rawAssets = await ApiService.GetAssetsAsync();
+            assets = rawAssets?.GroupBy(a => a.Id).Select(g => g.First()).ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            assets = new();
+            Console.WriteLine($"Error loading assets: {ex.Message}");
+        }
     }
 
     private void ShowCreateAssetModal()
